@@ -308,7 +308,8 @@ def prostopadloscian(dlugoscbokuA, dlugoscbokuB, dlugoscbokuC, psrodek):
 
 
 akey = 0
-
+bkey = 0
+incr = 1
 def keyboard(k, x, y):
     global akey
     global bkey
@@ -330,6 +331,30 @@ def keyboard(k, x, y):
     elif key == 'e':
         bkey = 'plus'
 
+    elif key == 'l' and bkey == 'minus':
+        OP.l -= incr
+    elif key == 'l' and bkey == 'plus':
+        OP.l += incr
+    elif key == 'r' and bkey == 'minus':
+        OP.r -= incr
+    elif key == 'r' and bkey == 'plus':
+        OP.r += incr
+    elif key == 'b' and bkey == 'minus':
+        OP.b -= incr
+    elif key == 'b' and bkey == 'plus':
+        OP.b += incr
+    elif key == 't' and bkey == 'minus':
+        OP.t -= incr
+    elif key == 't' and bkey == 'plus':
+        OP.t += incr
+    elif key == 'n' and bkey == 'minus':
+        OP.n -= incr
+    elif key == 'n' and bkey == 'plus':
+        OP.n += incr
+    elif key == 'f' and bkey == 'minus':
+        OP.f -= incr
+    elif key == 'f' and bkey == 'plus':
+        OP.f += incr
 
 
 
