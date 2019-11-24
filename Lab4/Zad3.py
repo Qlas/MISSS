@@ -211,6 +211,19 @@ def keyboard(k, x, y):
     global akey
     key = k.decode("utf-8")
 
+    if key == 'w':
+        pun[1]+=0.05
+    elif key == 's':
+        pun[1]-=0.05
+    elif key == 'a':
+        pun[0]-=0.05
+    elif key == 'd':
+        pun[0]+=0.05
+    elif key == 'q':
+        pun[2]-=1
+    elif key == 'e':
+        pun[2]+=1
+
 
 
 while True:
