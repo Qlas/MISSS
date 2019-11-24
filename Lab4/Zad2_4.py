@@ -19,7 +19,7 @@ class OP:  # parametry projekcji
     r = 10
     b = -10
     t = 10
-    n = 10
+    n = -10
     f = 100
 
 
@@ -103,30 +103,30 @@ def odcinek(x1, y1, x2, y2, R, G, B): # odcinek w 2d
             xtmp = x1; x1 = x2; x2 = xtmp
             ytmp = y1; y1 = y2; y2 = ytmp
         y = y1 - d
-        for x in range(round(x1), round(x2)+1):
+        for x in range(int(round(x1)), int(round(x2)+1)):
             y = y + d
             dcx = x
             dcy = round(y)
             if 0 <= dcx < windowSize:
                 if 0 <= dcy < windowSize:
-                    pixelMapR[dcx][dcy] = R
-                    pixelMapG[dcx][dcy] = G
-                    pixelMapB[dcx][dcy] = B
+                    pixelMapR[int(dcx)][int(dcy)] = R
+                    pixelMapR[int(dcx)][int(dcy)] = G
+                    pixelMapR[int(dcx)][int(dcy)] = B
     else:
         d = d2
         if y1 > y2:
             xtmp = x1; x1 = x2; x2 = xtmp
             ytmp = y1; y1 = y2; y2 = ytmp
         x = x1 - d
-        for y in range(round(y1), round(y2)+1):
+        for y in range(int(round(y1)), int(round(y2)+1)):
             x = x + d
             dcy = y
             dcx = round(x)
             if 0 <= dcx < windowSize:
                 if 0 <= dcy < windowSize:
-                    pixelMapR[dcx][dcy] = R
-                    pixelMapG[dcx][dcy] = G
-                    pixelMapB[dcx][dcy] = B
+                    pixelMapR[int(dcx)][int(dcy)] = R
+                    pixelMapR[int(dcx)][int(dcy)] = G
+                    pixelMapR[int(dcx)][int(dcy)] = B
 
 
 def punkt(x, y, R, G, B):  # punkt w 2d
@@ -152,7 +152,7 @@ def screen(p, width, height): # przekształcanie na wymiary ekranu
     return ret
 
 
-def odcinek3D(p1, p2, R, G, B): # rysowanie odcinka w 3D
+def odcinek3D(p1, p2, R=1, G=1, B=1): # rysowanie odcinka w 3D
     p1o = ortho(p1, OP.l, OP.r, OP.b, OP.t, OP.n, OP.f)
     p2o = ortho(p2, OP.l, OP.r, OP.b, OP.t, OP.n, OP.f)
     p1s = screen([p1o[0], p1o[1]], windowSize, windowSize)
@@ -160,50 +160,53 @@ def odcinek3D(p1, p2, R, G, B): # rysowanie odcinka w 3D
     odcinek(p1s[0], p1s[1], p2s[0], p2s[1], R, G, B)
 
 
-def szescian(dlugoscboku, srodek, rotx, roty, rotz, R, G, B):
-    pkt = [[srodek[0] - dlugoscboku, srodek[1] - dlugoscboku, srodek[2] - dlugoscboku],
-        [srodek[0] + dlugoscboku, srodek[1] - dlugoscboku, srodek[2] - dlugoscboku],
-        [srodek[0] + dlugoscboku, srodek[1] + dlugoscboku, srodek[2] - dlugoscboku],
-        [srodek[0] - dlugoscboku, srodek[1] + dlugoscboku, srodek[2] - dlugoscboku],
-        [srodek[0] - dlugoscboku, srodek[1] - dlugoscboku, srodek[2] + dlugoscboku],
-        [srodek[0] + dlugoscboku, srodek[1] - dlugoscboku, srodek[2] + dlugoscboku],
-        [srodek[0] + dlugoscboku, srodek[1] + dlugoscboku, srodek[2] + dlugoscboku],
-        [srodek[0] - dlugoscboku, srodek[1] + dlugoscboku, srodek[2] + dlugoscboku]]
+def szescian(dlugoscboku, psrodek, p0, v, phi):
+    p = np.array([[psrodek[0] - dlugoscboku, psrodek[1] - dlugoscboku, psrodek[2] - dlugoscboku],
+                  [psrodek[0] + dlugoscboku, psrodek[1] - dlugoscboku, psrodek[2] - dlugoscboku],
+                  [psrodek[0] + dlugoscboku, psrodek[1] + dlugoscboku, psrodek[2] - dlugoscboku],
+                  [psrodek[0] - dlugoscboku, psrodek[1] + dlugoscboku, psrodek[2] - dlugoscboku],
+                  [psrodek[0] - dlugoscboku, psrodek[1] - dlugoscboku, psrodek[2] + dlugoscboku],
+                  [psrodek[0] + dlugoscboku, psrodek[1] - dlugoscboku, psrodek[2] + dlugoscboku],
+                  [psrodek[0] + dlugoscboku, psrodek[1] + dlugoscboku, psrodek[2] + dlugoscboku],
+                  [psrodek[0] - dlugoscboku, psrodek[1] + dlugoscboku, psrodek[2] + dlugoscboku]])
 
-    for i in range(8):
-        npkt = np.matmul(np.array([[1, 0, 0], [0, np.cos(rotx), -np.sin(rotx)],
-                                   [0, np.sin(rotx), np.cos(rotx)]]), np.array(pkt[i]).transpose())
-        npkt = npkt.tolist()
-        pkt[i] = npkt
+    v_len = np.sqrt(v[0] ** 2 + v[1] ** 2 + v[2] ** 2)
+    if v_len != 1:
+        v = v / v_len
 
-    for i in range(8):
-        npkt = np.matmul(np.array([[np.cos(roty), 0, np.sin(roty)], [0, 1, 0],
-                                   [-np.sin(roty), 0, np.cos(roty)]]), np.array(pkt[i]).transpose())
-        npkt = npkt.tolist()
-        pkt[i] = npkt
+    a = v[0]
+    b = v[1]
+    c = v[2]
+    M = np.array([[a ** 2 * (1 - np.cos(phi)) + np.cos(phi), a * b * (1 - np.cos(phi)) - c * np.sin(phi),
+                   a * c * (1 - np.cos(phi)) + b * np.sin(phi)],
+                  [a * b * (1 - np.cos(phi)) + c * np.sin(phi), b ** 2 * (1 - np.cos(phi)) + np.cos(phi),
+                   b * c * (1 - np.cos(phi)) - a * np.sin(phi)],
+                  [a * c * (1 - np.cos(phi)) - b * np.sin(phi), b * c * (1 - np.cos(phi)) + a * np.sin(phi),
+                   c ** 2 * (1 - np.cos(phi)) + np.cos(phi)]])
 
-    for i in range(8):
-        npkt = np.matmul(np.array([[np.cos(rotz), -np.sin(rotz), 0],
-                                   [np.sin(rotz), np.cos(rotz), 0], [0, 0, 1]]), np.array(pkt[i]).transpose())
-        npkt = npkt.tolist()
-        pkt[i] = npkt
+    for i in range(len(p)):
+        p[i] = p[i] - p0
+        p[i] = M @ p[i].T
+        p[i] = p[i].T
+        p[i] = p[i] + np.array(p0)
 
-    odcinek3D(pkt[0], pkt[1], R, G, B)
-    odcinek3D(pkt[1], pkt[2], R, G, B)
-    odcinek3D(pkt[2], pkt[3], R, G, B)
-    odcinek3D(pkt[3], pkt[0], R, G, B)
-    odcinek3D(pkt[4], pkt[5], R, G, B)
-    odcinek3D(pkt[5], pkt[6], R, G, B)
-    odcinek3D(pkt[6], pkt[7], R, G, B)
-    odcinek3D(pkt[7], pkt[4], R, G, B)
-    odcinek3D(pkt[0], pkt[4], R, G, B)
-    odcinek3D(pkt[1], pkt[5], R, G, B)
-    odcinek3D(pkt[2], pkt[6], R, G, B)
-    odcinek3D(pkt[3], pkt[7], R, G, B)
+    odcinek3D(p[0], p[1])
+    odcinek3D(p[1], p[2])
+    odcinek3D(p[2], p[3])
+    odcinek3D(p[0], p[3])
+    odcinek3D(p[4], p[5])
+    odcinek3D(p[5], p[6])
+    odcinek3D(p[6], p[7])
+    odcinek3D(p[4], p[7])
+    odcinek3D(p[0], p[4])
+    odcinek3D(p[1], p[5])
+    odcinek3D(p[2], p[6])
+    odcinek3D(p[3], p[7])
 
 
 while True:
     clearMap([0.0, 0.0, 0.0])
-    szescian(0.5, [0,0,2], 0, 0, 0, 1, 1, 1)
+    for i in range(1,70):
+        szescian(0.2, [0,0,-2], 1,[0,0,1],i/10)
     paint()
     glutMainLoopEvent()
