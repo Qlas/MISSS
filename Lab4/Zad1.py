@@ -233,8 +233,7 @@ def prostokat(plewygorny, pprawydolny):
     odcinek3D_w(p1, p4)
 
 
-def prostopadloscian(dlugoscbokuA, dlugoscbokuB, dlugoscbokuC, psrodek):
-    srodek = psrodek
+def prostopadloscian(dlugoscbokuA, dlugoscbokuB, dlugoscbokuC, srodek):
     rotx = 0.2
     roty = 0.2
     rotz = 0.2

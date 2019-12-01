@@ -183,7 +183,7 @@ def szescian(dlugoscboku, psrodek, p0, v, phi):
                    b * c * (1 - np.cos(phi)) - a * np.sin(phi)],
                   [a * c * (1 - np.cos(phi)) - b * np.sin(phi), b * c * (1 - np.cos(phi)) + a * np.sin(phi),
                    c ** 2 * (1 - np.cos(phi)) + np.cos(phi)]])
-
+    print(M)
     for i in range(len(p)):
         p[i] = p[i] - p0
         p[i] = M @ p[i].T
@@ -206,7 +206,7 @@ def szescian(dlugoscboku, psrodek, p0, v, phi):
 
 while True:
     clearMap([0.0, 0.0, 0.0])
-    for i in range(1,70):
-        szescian(0.2, [0,0,-2], 1,[0,0,1],i/10)
+    for i in range(1,20):
+        szescian(0.2, [0,0,-1], 0.2,[0,0,-1.4],i/10)
     paint()
     glutMainLoopEvent()
