@@ -176,10 +176,10 @@ def screen(p, width, height): # przekształcanie na wymiary ekranu
 p = np.array([0.0,0.0,0.0])
 def odcinek3D(p1, p2, R, G, B): # rysowanie odcinka w 3D
     view = np.array(camera(p))
+    p1 = view @ p1.transpose()
+    p2 = view @ p2.transpose()
     p1o = np.array(ortho(p1, OP.l, OP.r, OP.b, OP.t, OP.n, OP.f))
     p2o = np.array(ortho(p2, OP.l, OP.r, OP.b, OP.t, OP.n, OP.f))
-    p1o = view @ p1o.transpose()
-    p2o = view @ p2o.transpose()
 
     p1o = p1o.transpose()
     p2o = p2o.transpose()
