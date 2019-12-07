@@ -18,8 +18,8 @@ mousex = windowWidth/2
 mousey = windowHeight/2
 def mouseMotion(x, y):
     global mousex, mousey
-    mousex = 0 if x < 0 else windowWidth if x > windowWidth else x
-    mousey = 0 if y < 0 else windowHeight if y > windowHeight else y
+    # mousex = 0 if x < 0 else windowWidth if x > windowWidth else x
+    # mousey = 0 if y < 0 else windowHeight if y > windowHeight else y
 def mouseMouse(btn, stt, x, y):
     pass
 
@@ -89,7 +89,7 @@ def paint():
     glEnd()
     glPopMatrix()
     glutSwapBuffers()
-    pass
+
 # utworzenie okna
 glutInit(sys.argv)
 glutInitWindowPosition(int((ctypes.windll.user32.GetSystemMetrics(0) - windowWidth)/2),
@@ -114,6 +114,17 @@ glMatrixMode(GL_PROJECTION)
 glLoadIdentity()
 gluPerspective(90.0, float(windowWidth/windowHeight), 0.1, 100.0)
 glMatrixMode(GL_MODELVIEW)
-
+def keyboard(k, x, y):
+    global mousex, mousey
+    key = k.decode("utf-8")
+    if key == "a":
+        mousex -= 5
+    elif key == "d":
+        mousex += 5
+    elif key == "w":
+        mousey += 5
+    elif key == "s":
+        mousey -= 5
 # pętla programu
+glutKeyboardFunc(keyboard)
 glutMainLoop()
