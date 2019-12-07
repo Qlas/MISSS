@@ -51,7 +51,7 @@ glutInitWindowPosition(0, 0)
 glutCreateWindow(b"Lab04")
 glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB)
 
-# inicjalizacja wyświetlania
+0# inicjalizacja wyświetlania
 glMatrixMode(GL_PROJECTION)
 glLoadIdentity()
 gluOrtho2D(0.0, windowSize, 0.0, windowSize)

@@ -8,7 +8,7 @@ import numpy as np
 pointSize = 5
 windowSize = 200
 clearColor = [0.0, 0.0, 0.0]
-
+p = np.array([0.0, 0.0, 0.0])
 
 pixelMapR = [[clearColor[0] for y in range(windowSize)] for x in range(windowSize)]
 pixelMapG = [[clearColor[1] for y in range(windowSize)] for x in range(windowSize)]
@@ -64,8 +64,8 @@ glutIdleFunc(paint)
 glClearColor(1.0, 1.0, 1.0, 1.0)
 glEnable(GL_PROGRAM_POINT_SIZE)
 glPointSize(pointSize)
-pitch = 15
-yaw = 10
+pitch = 10
+yaw = 15
 
 def cupdate(step = 0.1):
     global tick
@@ -74,11 +74,11 @@ def cupdate(step = 0.1):
         return False
     tick = ltime
     return True
-
 def camera(position):
-    front = [np.cos(np.radians(pitch))*np.cos(np.radians(yaw)),
+    global front
+    front = np.array([np.cos(np.radians(pitch))*np.sin(np.radians(yaw)),
              np.sin(np.radians(pitch)),
-             np.cos(np.radians(pitch)) * np.sin(np.radians(yaw))]
+             np.cos(np.radians(pitch)) * np.cos(np.radians(yaw))])
     direction = position + front
     len_direction = np.sqrt(direction[0] ** 2 + direction[1] ** 2 + direction[2] ** 2)
     if len_direction != 1:
@@ -162,10 +162,9 @@ def punkt(x, y, R, G, B):  # punkt w 2d
 
 def ortho(p, l, r, b, t, n, f):  # projekcja ortograficzna
     ret = [
-        (2 * (p[0] * n - r * p[2]) / (r * p[2] - l * p[2]) + 1),
-        (2 * (p[1] * n - t * p[2]) / (t * p[2] - b * p[2]) + 1),
-        (1 - 2 * (p[2] - f) / (n - f)),
-    ]
+        2 * ((p[0] * n - r * p[2]) / (r * p[2] - l * p[2])) + 1,
+        2 * ((p[1] * n - t * p[2]) / (t * p[2] - b * p[2])) + 1,
+        1 - 2 * ((p[2] - f) / (n - f))]
     return ret
 
 
@@ -173,91 +172,91 @@ def screen(p, width, height): # przekształcanie na wymiary ekranu
     ret = [(width - 1) * (p[0] + 1) / 2, (height - 1) * (p[1] + 1) / 2]
     return ret
 
-p = np.array([0.0,0.0,0.0])
-def odcinek3D(p1, p2, R, G, B): # rysowanie odcinka w 3D
+
+def odcinek3D(p1, p2, R=1, G=1, B=1): # rysowanie odcinka w 3D
     view = np.array(camera(p))
-    p1 = view @ p1.transpose()
-    p2 = view @ p2.transpose()
+    p1 = view @ p1.T
+    p2 = view @ p2.T
+
+    p1 = p1.T
+    p2 = p2.T
     p1o = np.array(ortho(p1, OP.l, OP.r, OP.b, OP.t, OP.n, OP.f))
     p2o = np.array(ortho(p2, OP.l, OP.r, OP.b, OP.t, OP.n, OP.f))
 
-    p1o = p1o.transpose()
-    p2o = p2o.transpose()
+
     p1s = screen([p1o[0], p1o[1]], windowSize, windowSize)
     p2s = screen([p2o[0], p2o[1]], windowSize, windowSize)
     odcinek(p1s[0], p1s[1], p2s[0], p2s[1], R, G, B)
 
 
-def szescian(dlugoscboku, srodek, rotx, roty, rotz, R, G, B):
-    pkt = np.array([[srodek[0] - dlugoscboku, srodek[1] - dlugoscboku, srodek[2] - dlugoscboku],
-        [srodek[0] + dlugoscboku, srodek[1] - dlugoscboku, srodek[2] - dlugoscboku],
-        [srodek[0] + dlugoscboku, srodek[1] + dlugoscboku, srodek[2] - dlugoscboku],
-        [srodek[0] - dlugoscboku, srodek[1] + dlugoscboku, srodek[2] - dlugoscboku],
-        [srodek[0] - dlugoscboku, srodek[1] - dlugoscboku, srodek[2] + dlugoscboku],
-        [srodek[0] + dlugoscboku, srodek[1] - dlugoscboku, srodek[2] + dlugoscboku],
-        [srodek[0] + dlugoscboku, srodek[1] + dlugoscboku, srodek[2] + dlugoscboku],
-        [srodek[0] - dlugoscboku, srodek[1] + dlugoscboku, srodek[2] + dlugoscboku]])
+def szescian(dlugoscboku, psrodek, p0, v, phi):
+    p = np.array([[psrodek[0] - dlugoscboku, psrodek[1] - dlugoscboku, psrodek[2] - dlugoscboku],
+                  [psrodek[0] + dlugoscboku, psrodek[1] - dlugoscboku, psrodek[2] - dlugoscboku],
+                  [psrodek[0] + dlugoscboku, psrodek[1] + dlugoscboku, psrodek[2] - dlugoscboku],
+                  [psrodek[0] - dlugoscboku, psrodek[1] + dlugoscboku, psrodek[2] - dlugoscboku],
+                  [psrodek[0] - dlugoscboku, psrodek[1] - dlugoscboku, psrodek[2] + dlugoscboku],
+                  [psrodek[0] + dlugoscboku, psrodek[1] - dlugoscboku, psrodek[2] + dlugoscboku],
+                  [psrodek[0] + dlugoscboku, psrodek[1] + dlugoscboku, psrodek[2] + dlugoscboku],
+                  [psrodek[0] - dlugoscboku, psrodek[1] + dlugoscboku, psrodek[2] + dlugoscboku]])
 
-    for i in range(8):
-        npkt = np.matmul(np.array([[1, 0, 0], [0, np.cos(rotx), -np.sin(rotx)],
-                                   [0, np.sin(rotx), np.cos(rotx)]]), np.array(pkt[i]).transpose())
-        npkt = npkt.tolist()
-        pkt[i] = npkt
+    v_len = np.sqrt(v[0] ** 2 + v[1] ** 2 + v[2] ** 2)
+    if v_len != 1:
+        v = v / v_len
 
-    for i in range(8):
-        npkt = np.matmul(np.array([[np.cos(roty), 0, np.sin(roty)], [0, 1, 0],
-                                   [-np.sin(roty), 0, np.cos(roty)]]), np.array(pkt[i]).transpose())
-        npkt = npkt.tolist()
-        pkt[i] = npkt
-    for i in range(8):
-        npkt = np.matmul(np.array([[np.cos(rotz), -np.sin(rotz), 0],
-                                   [np.sin(rotz), np.cos(rotz), 0], [0, 0, 1]]), np.array(pkt[i]).transpose())
-        npkt = npkt.tolist()
-        pkt[i] = npkt
+    a = v[0]
+    b = v[1]
+    c = v[2]
+    M = np.array([[a ** 2 * (1 - np.cos(phi)) + np.cos(phi), a * b * (1 - np.cos(phi)) - c * np.sin(phi),
+                   a * c * (1 - np.cos(phi)) + b * np.sin(phi)],
+                  [a * b * (1 - np.cos(phi)) + c * np.sin(phi), b ** 2 * (1 - np.cos(phi)) + np.cos(phi),
+                   b * c * (1 - np.cos(phi)) - a * np.sin(phi)],
+                  [a * c * (1 - np.cos(phi)) - b * np.sin(phi), b * c * (1 - np.cos(phi)) + a * np.sin(phi),
+                   c ** 2 * (1 - np.cos(phi)) + np.cos(phi)]])
+    for i in range(len(p)):
+        p[i] = p[i] - p0
+        p[i] = M @ p[i].T
+        p[i] = p[i].T
+        p[i] = p[i] + np.array(p0)
 
-
-    odcinek3D(pkt[0], pkt[1], R, G, B)
-    odcinek3D(pkt[1], pkt[2], R, G, B)
-    odcinek3D(pkt[2], pkt[3], R, G, B)
-    odcinek3D(pkt[3], pkt[0], R, G, B)
-    odcinek3D(pkt[4], pkt[5], R, G, B)
-    odcinek3D(pkt[5], pkt[6], R, G, B)
-    odcinek3D(pkt[6], pkt[7], R, G, B)
-    odcinek3D(pkt[7], pkt[4], R, G, B)
-    odcinek3D(pkt[0], pkt[4], R, G, B)
-    odcinek3D(pkt[1], pkt[5], R, G, B)
-    odcinek3D(pkt[2], pkt[6], R, G, B)
-    odcinek3D(pkt[3], pkt[7], R, G, B)
+    odcinek3D(p[0], p[1])
+    odcinek3D(p[1], p[2])
+    odcinek3D(p[2], p[3])
+    odcinek3D(p[0], p[3])
+    odcinek3D(p[4], p[5])
+    odcinek3D(p[5], p[6])
+    odcinek3D(p[6], p[7])
+    odcinek3D(p[4], p[7])
+    odcinek3D(p[0], p[4])
+    odcinek3D(p[1], p[5])
+    odcinek3D(p[2], p[6])
+    odcinek3D(p[3], p[7])
 akey = 0
 
 
-
+camspeed = 0.01
 def keyboard(k, x, y):
     global akey
     global yaw
     global pitch
+    global p
+    global front
+    global a
     key = k.decode("utf-8")
     prze = 0.2
+    print("p", p)
+    print("fron", front)
     if key == 'w':
-        p[1]+=prze
+        p += camspeed * front
     elif key == 's':
-        p[1]-=prze
-    elif key == 'a':
-        p[0]-=prze
-    elif key == 'd':
-        p[0]+=prze
+        p -= camspeed * front
     elif key == 'q':
-        p[2]-=prze
+        yaw -= 1
     elif key == 'e':
-        p[2]+=prze
-    elif key == 'i':
-        yaw += 3
-    elif key == 'o':
-        yaw -= 3
-    elif key == 'j':
-        pitch += 3
-    elif key == 'k':
-        pitch -= 3
+        yaw += 1
+    elif key == 'r':
+        pitch += 1
+    elif key == 'f':
+        pitch -= 1
 
 
 
@@ -265,10 +264,12 @@ def keyboard(k, x, y):
 while True:
     clearMap([0.0, 0.0, 0.0])
     glutKeyboardFunc(keyboard)
-    print(p)
 
-    szescian(0.5, [0, 2, 5], 0, 0, 0, 0, 1, 1)
-    szescian(0.5, [2, 3, 5], 0, 0, 0, 1, 0, 1)
-    szescian(0.5, [2, 0, 3], 0, 0, 0, 1, 1, 0)
+    # szescian(0.5, [0, 2, 5], 0, 0, 0, 0, 1, 1)
+    szescian(5, [2, 2, 30], [2, 3, 5], [1, 2, 3], np.radians(10))
+    szescian(3, [-10, -10, 30], [2, 3, 5], [1, 2, 3], np.radians(20))
+    szescian(2, [-5, 5, 10], [2, 3, 5], [1, 2, 3], np.radians(0))
+    # szescian(0.5, [2, 3, 5], 0, 0, 0, 1, 0, 1)
+    # szescian(0.5, [2, 0, 3], 0, 0, 0, 1, 1, 0)
     paint()
     glutMainLoopEvent()
