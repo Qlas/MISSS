@@ -179,14 +179,19 @@ def keyboard(k, x, y):
         far += 5
     elif key == "z":
         flag = 1
+    elif key == "r":
+        if actual+1 < len(qubes):
+            actual += 1
+        else:
+            actual = 0
+    elif key == "f":
+        if actual > 0:
+            actual -= 1
+        else:
+            actual = len(qubes)-1
     elif key == "x":
         if len(qubes) > 0:
             qubes[actual][2] = [random.random(),random.random(),random.random()]
-            print(actual)
-            if actual+1 == len(qubes):
-                actual = 0
-            else:
-                actual += 1
     elif key == "c":
         if len(qubes)>0:
             qubes.pop(actual)
