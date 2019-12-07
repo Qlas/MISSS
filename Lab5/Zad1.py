@@ -3,6 +3,7 @@ from OpenGL.GLU import *
 from OpenGL.GLUT import *
 import numpy as np
 import ctypes
+import random
 windowWidth = 800
 windowHeight = 600
 camx = 0.0
@@ -16,6 +17,10 @@ upy = 1.0
 upz = 0.0
 mousex = windowWidth/2
 mousey = windowHeight/2
+qubes = []
+flag = 0
+counter = 0
+actual = 0
 def mouseMotion(x, y):
     global mousex, mousey
     # mousex = 0 if x < 0 else windowWidth if x > windowWidth else x
@@ -24,6 +29,7 @@ def mouseMouse(btn, stt, x, y):
     pass
 
 def paint():
+    global flag,qubes, counter
     # czyszczenie sceny
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
@@ -72,6 +78,47 @@ def paint():
     glVertex(-4.0, 1.0, 0.0)
     glEnd()
 
+    if flag == 1:
+        flag = 0
+        size = random.uniform(1,3)
+        qubes.append([[
+            (look[0]+size, look[1]-size, lookz2-size),
+            (look[0]+size, look[1]+size, lookz2-size),
+            (look[0]-size, look[1]+size, lookz2-size),
+            (look[0]-size, look[1]-size, lookz2-size),
+            (look[0]+size, look[1]-size, lookz2+size),
+            (look[0]+size, look[1]+size, lookz2+size),
+            (look[0]-size, look[1]-size, lookz2+size),
+            (look[0]-size, look[1]+size, lookz2+size)
+        ],[
+            (0, 1),
+            (0, 3),
+            (0, 4),
+            (2, 1),
+            (2, 3),
+            (2, 7),
+            (6, 3),
+            (6, 4),
+            (6, 7),
+            (5, 1),
+            (5, 4),
+            (5, 7)
+        ], [random.random(),random.random(),random.random()]])
+        print(look[0])
+        print(look[1])
+        print(look[2])
+        counter += 1
+
+    for i in qubes:
+        glColor(i[2])
+        glBegin(GL_LINES)
+        for edge in i[1]:
+            for vertex in edge:
+                glVertex3fv(i[0][vertex])
+        glEnd()
+
+
+
     # celownik
     glColor(0.0, 0.0, 0.0)
     glPushMatrix()
@@ -112,19 +159,40 @@ glPointSize(5.0)
 glClearColor(1.0, 1.0, 1.0, 0.0)
 glMatrixMode(GL_PROJECTION)
 glLoadIdentity()
-gluPerspective(90.0, float(windowWidth/windowHeight), 0.1, 100.0)
+far = 100.0
+gluPerspective(90.0, float(windowWidth/windowHeight), 0.1, far)
 glMatrixMode(GL_MODELVIEW)
 def keyboard(k, x, y):
-    global mousex, mousey
+    global mousex, mousey, far, flag, actual, qubes
     key = k.decode("utf-8")
     if key == "a":
-        mousex -= 5
+        mousex -= 10
     elif key == "d":
-        mousex += 5
+        mousex += 10
     elif key == "w":
         mousey += 5
     elif key == "s":
         mousey -= 5
+    elif key == "q":
+        far -= 5
+    elif key == "e":
+        far += 5
+    elif key == "z":
+        flag = 1
+    elif key == "x":
+        if len(qubes) > 0:
+            qubes[actual][2] = [random.random(),random.random(),random.random()]
+            print(actual)
+            if actual+1 == len(qubes):
+                actual = 0
+            else:
+                actual += 1
+    elif key == "c":
+        if len(qubes)>0:
+            qubes.pop(actual)
+            if actual > 0:
+                actual -= 1
+
 # pętla programu
 glutKeyboardFunc(keyboard)
 glutMainLoop()
