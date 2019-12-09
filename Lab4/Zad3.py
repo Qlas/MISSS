@@ -264,7 +264,6 @@ def keyboard(k, x, y):
 while True:
     clearMap([0.0, 0.0, 0.0])
     glutKeyboardFunc(keyboard)
-
     # szescian(0.5, [0, 2, 5], 0, 0, 0, 0, 1, 1)
     szescian(5, [2, 2, 20], [2, 3, 5], [1, 2, 3], np.radians(0))
     szescian(3, [-5, -10, 30], [2, 4, 5], [1, 2, 3], np.radians(50))
