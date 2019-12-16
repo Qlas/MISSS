@@ -7,6 +7,18 @@ import ctypes
 import math
 windowWidth = 800
 windowHeight = 600
+pos_cam = np.array([0.0,0.0,10.0])
+front = np.array([0.0,0.0,-1.0])
+pos=[0.0,0.0,-20.0]
+up = np.array([0.0, 1.0, 0.0])
+yaw = -90
+pitch = 0
+lastX = 800 / 2
+lastY = 800 / 2
+firstmouse = 1
+mousex = windowWidth/2
+mousey = windowHeight/2
+obr_os = 0
 # vertex shader - kod
 vsc = """
         #version 330 core
@@ -29,27 +41,6 @@ fsc = """
         out_kolor = vec4(inter_kolor.xyzw);
         }
         """
-pos_cam = np.array([0.0,0.0,3.0])
-front = np.array([0.0,0.0,-1.0])
-pos=[0.0,0.0,-20.0]
-up = np.array([0.0, 1.0, 0.0])
-class OP:  # parametry projekcji
-    l = -10
-    r = 10
-    b = -10
-    t = 10
-    n = 10
-    f = 100
-
-def persp(fovy, aspect, n, f):
-    s = 1.0/math.tan(math.radians(fovy)/2.0)
-    sx, sy = s / aspect, s
-    zz = (f+n)/(n-f)
-    zw = 2*f*n/(n-f)
-    return np.matrix([[sx,0,0,0],
-                      [0,sy,0,0],
-                      [0,0,zz,zw],
-                      [0,0,-1,0]])
 
 def dummy():
     glutSwapBuffers()
@@ -108,8 +99,6 @@ def szescian(dlugoscboku, srodek, phi, v, rotx=0, roty=0, rotz=0):
     # pkt[2][0] -= hh
     # pkt[3][0] -= hh
 
-
-
     v_len = np.sqrt(v[0] ** 2 + v[1] ** 2 + v[2] ** 2)
     if v_len != 1:
         v = v / v_len
@@ -125,25 +114,20 @@ def szescian(dlugoscboku, srodek, phi, v, rotx=0, roty=0, rotz=0):
                    c ** 2 * (1 - np.cos(phi)) + np.cos(phi)]])
     # print(M)
 
-    for punkt in pkt:
+    for punkt in pkt:                   # przesuniecie na srodek
         punkt[0] -= srodek[0]
         punkt[1] -= srodek[1]
         punkt[2] -= srodek[2]
 
-    for i in range(len(pkt)):
+    for i in range(len(pkt)):           # obrot
         pkt[i] = np.matmul(M, pkt[i])
 
-    for punkt in pkt:
+    for punkt in pkt:                   # powrot na miejsce
         punkt[0] += srodek[0]
         punkt[1] += srodek[1]
         punkt[2] += srodek[2]
-    #
-    # for punkt in pkt:
-    #     punkt[0] += pos[0]
-    #     punkt[1] += pos[1]
-    #     punkt[2] += pos[2]
 
-    punkt = [
+    punkt = [                           # rysowanie trojkatow
         pkt[0], pkt[1], pkt[3],
         pkt[1], pkt[2], pkt[3],
         pkt[3], pkt[2], pkt[6],
@@ -157,15 +141,16 @@ def szescian(dlugoscboku, srodek, phi, v, rotx=0, roty=0, rotz=0):
         pkt[4], pkt[5], pkt[6],
         pkt[4], pkt[7], pkt[6]
     ]
+
     pkt = []
     for i in punkt:
         for j in i:
             pkt.append(j)
 
     kolor = [
+        1, 1, 1,                        # trojkat 1 start
         1, 1, 1,
-        1, 1, 1,
-        1, 1, 1,
+        1, 1, 1,                        # trojkat 1 end
         1, 1, 1,
         1, 1, 1,
         1, 1, 1,
@@ -202,24 +187,45 @@ def szescian(dlugoscboku, srodek, phi, v, rotx=0, roty=0, rotz=0):
     ]
     return pkt,kolor
 
+def mouseMotion(x, y):
+    global firstmouse, lastX, lastY, yaw, pitch, front
 
+    mousex = 0 if x < 0 else windowWidth if x > windowWidth else x
+    mousey = 0 if y < 0 else windowHeight if y > windowHeight else y
+    # if firstmouse == 1:
+    #     firstmouse = 0
+    #     lastX = mousex
+    #     lastY = mousey
+    xoffset = mousex-lastX
+    yoffset = lastY-mousey
+    lastX = mousex
+    lastY = mousey
+    sensitivity = 0.1
+    xoffset *= sensitivity
+    yoffset *= sensitivity
 
+    yaw += xoffset
+    pitch += yoffset
 
-# utworzenie okna
+    if pitch > 89:
+        pitch = 89
+    if pitch < -89:
+        pitch = -89
+    fro = np.array([0.0, 0.0, 0.0])
+    fro[0] = np.cos(np.radians(yaw) * np.cos(np.radians(pitch)))
+    fro[1] = np.sin(np.radians(pitch))
+    fro[2] = np.sin(np.radians(yaw) * np.cos(np.radians(pitch)))
+
+    front = normalized(fro)
+
+# utworzenie
+
 glutInit(sys.argv)
 glutInitWindowPosition(int((ctypes.windll.user32.GetSystemMetrics(0) - windowWidth)/2),
 int((ctypes.windll.user32.GetSystemMetrics(1) - windowHeight)/2))
 glutInitWindowSize(windowWidth, windowHeight)
 glutCreateWindow(b"PyOpenGL")
 
-# macierz punktów
-punkty = [-1.0, 0.0, 1.0,
-           1.0, 0.0, 1.0,
-           0.0, 1.0, 1.0]
-zplus = 0.0
-kolory = [1.0, 0.0, 0.0,
-          0.0, 1.0, 0.0,
-          0.0, 0.0, 1.0]
 
 # shadery
 vs = compileShader(vsc, GL_VERTEX_SHADER)
@@ -229,49 +235,43 @@ glAttachShader(sp, vs)
 glAttachShader(sp, fs)
 glLinkProgram(sp)
 glUseProgram(sp)
-
+glutPassiveMotionFunc(mouseMotion)
 # przekazujemy dwa atrybuty do vertex shader-a; pozycję i kolor
 glEnableVertexAttribArray(0)
 glEnableVertexAttribArray(1)
 glutDisplayFunc(dummy) # niewykorzystana
-obr_os = 0.01
-a = 0
+
 glEnable(GL_DEPTH_TEST)
 glDepthFunc(GL_LESS)
+
 def normalized(v):
     norm = np.linalg.norm(v)
     return v / norm if norm > 0 else v
+
 def keyboard(k, x, y):
     global pos_cam, front
 
     key = k.decode("utf-8")
     if key == 'e':
-        pos[2] += 0.5
-    elif key == 'q':
-        pos[2] -= 0.5
-    elif key == 'w':
-        pos[1] -= 0.2
-    elif key == 's':
-        pos[1] += 0.2
-    elif key == 'a':
-        pos[0] += 0.2
-    elif key == 'd':
-        pos[0] -= 0.2
-    elif key == 'j':
         pos_cam += front
-    elif key == 'l':
+    elif key == 'q':
         pos_cam -= front
-    elif key == 'i':
+    elif key == 'a':
         pos_cam -= normalized(np.cross(front, up))
-    elif key == 'k':
+    elif key == 'd':
         pos_cam += normalized(np.cross(front, up))
+    elif key == 'w':
+        pos_cam[1] += 1
+    elif key == 's':
+        pos_cam[1] -= 1
+
 def perspective(fov, aspect, near, far):
     n, f = near, far
     t = np.tan((fov * np.pi / 180) / 2) * near
     b = - t
     r = t * aspect
     l = b * aspect
-    assert abs(n - f) > 0
+
     return np.array((
         ((2*n)/(r-l),           0,           0,  0),
         (          0, (2*n)/(t-b),           0,  0),
@@ -297,7 +297,7 @@ def look_at(pos_cam, front, up):
 def create_mvp():
     fov, near, far = 45, 0.1, 100
     projection = perspective(fov, float(windowWidth/windowHeight), near, far)
-    view = look_at(pos_cam, front, up)
+    view = look_at(pos_cam, pos_cam + front, up)
     model = np.identity(4, float)
     mvp = model @ view @ projection
     return mvp.astype(np.float32)
@@ -310,8 +310,8 @@ while True:
     cube2 = szescian(2, [7, 0, 10.0], obr_os, [0, 1, 0])
     cube3 = szescian(2, [-7, 7, -20.0], obr_os, [0, 0, 1])
 
-    punkty = cube1[0] + cube2[0]+ cube3[0]
-    kolory = cube1[1] + cube1[1]+ cube3[1]
+    punkty = cube1[0] + cube2[0] + cube3[0]
+    kolory = cube1[1] + cube1[1] + cube3[1]
 
     mvp = create_mvp()
     mvploc = glGetUniformLocation(sp, "mvp") # pobieranie nazwy z shadera
@@ -323,5 +323,6 @@ while True:
     glutSwapBuffers()
     glFlush()
     glutMainLoopEvent()
-    # obr_os += 0.005
-    obr_os = 0
+    obr_os += 0.005
+    # print(pitch)
+    # print(yaw)
