@@ -301,6 +301,7 @@ def create_mvp():
     model = np.identity(4)
     mvp = model @ view @ projection
     return mvp.astype(np.float32)
+
 while True:
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT) # czyszczenie sceny
     glutKeyboardFunc(keyboard)
