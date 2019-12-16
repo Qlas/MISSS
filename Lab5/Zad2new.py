@@ -29,8 +29,10 @@ fsc = """
         out_kolor = vec4(inter_kolor.xyzw);
         }
         """
-
-pos=[0.0,0.0,-1.0]
+pos_cam = np.array([0.0,0.0,3.0])
+front = np.array([0.0,0.0,-1.0])
+pos=[0.0,0.0,-20.0]
+up = np.array([0.0, 1.0, 0.0])
 class OP:  # parametry projekcji
     l = -10
     r = 10
@@ -121,7 +123,7 @@ def szescian(dlugoscboku, srodek, phi, v, rotx=0, roty=0, rotz=0):
                    b * c * (1 - np.cos(phi)) - a * np.sin(phi)],
                   [a * c * (1 - np.cos(phi)) - b * np.sin(phi), b * c * (1 - np.cos(phi)) + a * np.sin(phi),
                    c ** 2 * (1 - np.cos(phi)) + np.cos(phi)]])
-    print(M)
+    # print(M)
 
     for punkt in pkt:
         punkt[0] -= srodek[0]
@@ -135,11 +137,11 @@ def szescian(dlugoscboku, srodek, phi, v, rotx=0, roty=0, rotz=0):
         punkt[0] += srodek[0]
         punkt[1] += srodek[1]
         punkt[2] += srodek[2]
-
-    for punkt in pkt:
-        punkt[0] += pos[0]
-        punkt[1] += pos[1]
-        punkt[2] += pos[2]
+    #
+    # for punkt in pkt:
+    #     punkt[0] += pos[0]
+    #     punkt[1] += pos[1]
+    #     punkt[2] += pos[2]
 
     punkt = [
         pkt[0], pkt[1], pkt[3],
@@ -236,12 +238,13 @@ obr_os = 0.01
 a = 0
 glEnable(GL_DEPTH_TEST)
 glDepthFunc(GL_LESS)
-eyes = [0.0,0.0,1.0]
+def normalized(v):
+    norm = np.linalg.norm(v)
+    return v / norm if norm > 0 else v
 def keyboard(k, x, y):
-    global pos
+    global pos_cam, front
 
     key = k.decode("utf-8")
-    prze = 0.2
     if key == 'e':
         pos[2] += 0.5
     elif key == 'q':
@@ -255,13 +258,13 @@ def keyboard(k, x, y):
     elif key == 'd':
         pos[0] -= 0.2
     elif key == 'j':
-        eyes[0] += 0.2
+        pos_cam += front
     elif key == 'l':
-        eyes[0] -= 0.2
+        pos_cam -= front
     elif key == 'i':
-        eyes[1] -= 0.2
+        pos_cam -= normalized(np.cross(front, up))
     elif key == 'k':
-        eyes[1] += 0.2
+        pos_cam += normalized(np.cross(front, up))
 def perspective(fov, aspect, near, far):
     n, f = near, far
     t = np.tan((fov * np.pi / 180) / 2) * near
@@ -276,48 +279,39 @@ def perspective(fov, aspect, near, far):
         (          0,           0, 2*f*n/(n-f),  0)))
 
 
-def normalized(v):
-    norm = np.linalg.norm(v)
-    return v / norm if norm > 0 else v
 
 
-def look_at(eye, target, up):
-    zax = normalized(eye - target)
-    xax = normalized(np.cross(up, zax))
-    yax = np.cross(zax, xax)
-    x = - xax.dot(eye)
-    y = - yax.dot(eye)
-    z = - zax.dot(eye)
-    return np.array(((xax[0], yax[0], zax[0], 0),
-                     (xax[1], yax[1], zax[1], 0),
-                     (xax[2], yax[2], zax[2], 0),
+
+def look_at(pos_cam, front, up):
+    direction = normalized(pos_cam - front)
+    right = np.cross(up, direction)
+    up_ca = np.cross(direction, right)
+    x = - right.dot(pos_cam)
+    y = - up_ca.dot(pos_cam)
+    z = - direction.dot(pos_cam)
+
+    return np.array(((right[0], up_ca[0], direction[0], 0),
+                     (right[1], up_ca[1], direction[1], 0),
+                     (right[2], up_ca[2], direction[2], 0),
                      (x, y, z, 1)))
 def create_mvp():
     fov, near, far = 45, 0.1, 100
-    eye = eyes
-    target, up = np.array((0,0,0)), np.array((0,1,0))
     projection = perspective(fov, float(windowWidth/windowHeight), near, far)
-    view = look_at(eye, target, up)
-    model = np.identity(4)
+    view = look_at(pos_cam, front, up)
+    model = np.identity(4, float)
     mvp = model @ view @ projection
     return mvp.astype(np.float32)
+
 
 while True:
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT) # czyszczenie sceny
     glutKeyboardFunc(keyboard)
-    # per = persp(OP.l, OP.r, OP.b, OP.t, OP.n, OP.f)
-    cube1 = szescian(2, [0, 0, 0.0], obr_os, [1, 0, 0])
+    cube1 = szescian(2, [0, 0, 0.0], obr_os, [1, 1, 1])
     cube2 = szescian(2, [7, 0, 10.0], obr_os, [0, 1, 0])
     cube3 = szescian(2, [-7, 7, -20.0], obr_os, [0, 0, 1])
 
     punkty = cube1[0] + cube2[0]+ cube3[0]
     kolory = cube1[1] + cube1[1]+ cube3[1]
-    # modyfikacja trójkąta
-    # punkty[0] += 0.0001
-    # model, widok, projekcja
-    mvp = np.identity(4, float)
-    per = persp(90.0, float(windowWidth / windowHeight), 10, 100)
-    mvp = np.matmul(per, mvp)
 
     mvp = create_mvp()
     mvploc = glGetUniformLocation(sp, "mvp") # pobieranie nazwy z shadera
@@ -329,4 +323,5 @@ while True:
     glutSwapBuffers()
     glFlush()
     glutMainLoopEvent()
+    # obr_os += 0.005
     obr_os = 0
