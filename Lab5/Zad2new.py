@@ -4,12 +4,12 @@ from OpenGL.GLUT import *
 from OpenGL.GL.shaders import *
 import numpy as np
 import ctypes
-import math
+
 windowWidth = 800
 windowHeight = 600
-pos_cam = np.array([0.0,0.0,10.0])
-front = np.array([0.0,0.0,-1.0])
-pos=[0.0,0.0,-20.0]
+pos_cam = np.array([0.0, 0.0, 10.0])
+front = np.array([0.0, 0.0, -1.0])
+pos = [0.0, 0.0, -20.0]
 up = np.array([0.0, 1.0, 0.0])
 yaw = -90
 pitch = 0
@@ -42,8 +42,15 @@ fsc = """
         }
         """
 
+
+def normalized(v):
+    norm = np.linalg.norm(v)
+    return v / norm if norm > 0 else v
+
+
 def dummy():
     glutSwapBuffers()
+
 
 def paint():
     # czyszczenie sceny
@@ -54,31 +61,16 @@ def paint():
     glLoadIdentity()
     glutSwapBuffers()
 
-def szescian(dlugoscboku, srodek, phi, v, rotx=0, roty=0, rotz=0):
-    pkt = np.array([[srodek[0] - dlugoscboku, srodek[1] - dlugoscboku, srodek[2] - dlugoscboku],
-           [srodek[0] + dlugoscboku, srodek[1] - dlugoscboku, srodek[2] - dlugoscboku],
-           [srodek[0] + dlugoscboku, srodek[1] + dlugoscboku, srodek[2] - dlugoscboku],
-           [srodek[0] - dlugoscboku, srodek[1] + dlugoscboku, srodek[2] - dlugoscboku],
-           [srodek[0] - dlugoscboku, srodek[1] - dlugoscboku, srodek[2] + dlugoscboku],
-           [srodek[0] + dlugoscboku, srodek[1] - dlugoscboku, srodek[2] + dlugoscboku],
-           [srodek[0] + dlugoscboku, srodek[1] + dlugoscboku, srodek[2] + dlugoscboku],
-           [srodek[0] - dlugoscboku, srodek[1] + dlugoscboku, srodek[2] + dlugoscboku]])
-    for i in range(8):
-        npkt = np.matmul(np.array([[1, 0, 0], [0, np.cos(rotx), -np.sin(rotx)],
-                                   [0, np.sin(rotx), np.cos(rotx)]]), np.array(pkt[i]).transpose())
-        npkt = npkt.tolist()
-        pkt[i] = npkt
-    for i in range(8):
-        npkt = np.matmul(np.array([[np.cos(roty), 0, np.sin(roty)], [0, 1, 0],
-                                   [-np.sin(roty), 0, np.cos(roty)]]), np.array(pkt[i]).transpose())
-        npkt = npkt.tolist()
-        pkt[i] = npkt
-    for i in range(8):
-        npkt = np.matmul(np.array([[np.cos(rotz), -np.sin(rotz), 0],
-                                   [np.sin(rotz), np.cos(rotz), 0], [0, 0, 1]]), np.array(pkt[i]).transpose())
-        npkt = npkt.tolist()
-        pkt[i] = npkt
 
+def szescian(dlugoscboku, srodek, phi, v):
+    pkt = np.array([[srodek[0] - dlugoscboku, srodek[1] - dlugoscboku, srodek[2] - dlugoscboku],
+                   [srodek[0] + dlugoscboku, srodek[1] - dlugoscboku, srodek[2] - dlugoscboku],
+                   [srodek[0] + dlugoscboku, srodek[1] + dlugoscboku, srodek[2] - dlugoscboku],
+                   [srodek[0] - dlugoscboku, srodek[1] + dlugoscboku, srodek[2] - dlugoscboku],
+                   [srodek[0] - dlugoscboku, srodek[1] - dlugoscboku, srodek[2] + dlugoscboku],
+                   [srodek[0] + dlugoscboku, srodek[1] - dlugoscboku, srodek[2] + dlugoscboku],
+                   [srodek[0] + dlugoscboku, srodek[1] + dlugoscboku, srodek[2] + dlugoscboku],
+                   [srodek[0] - dlugoscboku, srodek[1] + dlugoscboku, srodek[2] + dlugoscboku]])
 
     # print(pkt[0]) #lewy dolny tylni
     # print(pkt[1]) # prawy dolny tylni
@@ -99,9 +91,7 @@ def szescian(dlugoscboku, srodek, phi, v, rotx=0, roty=0, rotz=0):
     # pkt[2][0] -= hh
     # pkt[3][0] -= hh
 
-    v_len = np.sqrt(v[0] ** 2 + v[1] ** 2 + v[2] ** 2)
-    if v_len != 1:
-        v = v / v_len
+    v = normalized(v)
 
     a = v[0]
     b = v[1]
@@ -127,7 +117,7 @@ def szescian(dlugoscboku, srodek, phi, v, rotx=0, roty=0, rotz=0):
         punkt[1] += srodek[1]
         punkt[2] += srodek[2]
 
-    punkt = [                           # rysowanie trojkatow
+    punkt = [                           # wyznaczanie trojkatow
         pkt[0], pkt[1], pkt[3],
         pkt[1], pkt[2], pkt[3],
         pkt[3], pkt[2], pkt[6],
@@ -187,6 +177,7 @@ def szescian(dlugoscboku, srodek, phi, v, rotx=0, roty=0, rotz=0):
     ]
     return pkt,kolor
 
+
 def mouseMotion(x, y):
     global firstmouse, lastX, lastY, yaw, pitch, front
 
@@ -220,6 +211,7 @@ def mouseMotion(x, y):
 
 # utworzenie
 
+
 glutInit(sys.argv)
 glutInitWindowPosition(int((ctypes.windll.user32.GetSystemMetrics(0) - windowWidth)/2),
 int((ctypes.windll.user32.GetSystemMetrics(1) - windowHeight)/2))
@@ -244,9 +236,6 @@ glutDisplayFunc(dummy) # niewykorzystana
 glEnable(GL_DEPTH_TEST)
 glDepthFunc(GL_LESS)
 
-def normalized(v):
-    norm = np.linalg.norm(v)
-    return v / norm if norm > 0 else v
 
 def keyboard(k, x, y):
     global pos_cam, front
@@ -265,6 +254,7 @@ def keyboard(k, x, y):
     elif key == 's':
         pos_cam[1] -= 1
 
+
 def perspective(fov, aspect, near, far):
     n, f = near, far
     t = np.tan((fov * np.pi / 180) / 2) * near
@@ -272,14 +262,11 @@ def perspective(fov, aspect, near, far):
     r = t * aspect
     l = b * aspect
 
-    return np.array((
-        ((2*n)/(r-l),           0,           0,  0),
-        (          0, (2*n)/(t-b),           0,  0),
-        ((r+l)/(r-l), (t+b)/(t-b), (f+n)/(n-f), -1),
-        (          0,           0, 2*f*n/(n-f),  0)))
-
-
-
+    return np.array([
+        [(2*n)/(r-l),           0,           0,  0],
+        [          0, (2*n)/(t-b),           0,  0],
+        [(r+l)/(r-l), (t+b)/(t-b), (f+n)/(n-f), -1],
+        [          0,           0, 2*f*n/(n-f),  0]])
 
 
 def look_at(pos_cam, front, up):
@@ -290,10 +277,14 @@ def look_at(pos_cam, front, up):
     y = - up_ca.dot(pos_cam)
     z = - direction.dot(pos_cam)
 
-    return np.array(((right[0], up_ca[0], direction[0], 0),
-                     (right[1], up_ca[1], direction[1], 0),
-                     (right[2], up_ca[2], direction[2], 0),
-                     (x, y, z, 1)))
+    return np.array([
+                     [right[0], up_ca[0], direction[0], 0],
+                     [right[1], up_ca[1], direction[1], 0],
+                     [right[2], up_ca[2], direction[2], 0],
+                     [x, y, z, 1]
+                    ])
+
+
 def create_mvp():
     fov, near, far = 45, 0.1, 100
     projection = perspective(fov, float(windowWidth/windowHeight), near, far)
@@ -323,6 +314,6 @@ while True:
     glutSwapBuffers()
     glFlush()
     glutMainLoopEvent()
-    obr_os += 0.005
+    obr_os += 0.003
     # print(pitch)
     # print(yaw)
