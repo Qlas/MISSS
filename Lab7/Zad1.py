@@ -14,16 +14,16 @@ class dd(dict):
     __delattr__ = dict.__delitem__
 part1 = {}
 part1 = dd(part1)
-part1.v = [0, -1, 0]
+part1.v = [4, -4, -4]
 part1.p = [-5, 2, 3]
-part1.m = 10
+part1.m = 1
 part1.r = 1
 part1.col = [0, 0.5, 0]
 part1.quad = None
 s = 1
 pos = [-5.0, 5.0, 10.0]
 g = 0
-o = 0
+o = 0.1
 # rysowanie sfery
 def drawSphere(part):
     glLoadIdentity()
@@ -88,34 +88,82 @@ def drawOther():
     glVertex3fv([10, 10, 10])
     glVertex3fv([10, 10, -10])
     glEnd()
-
+a = 1
+g1 = 9.81
 # ruch sfery
+def fun(x,y):
+    return a*x
+
+def rk4(x,y,h):
+    K1 = fun(x,y)
+    K2 = fun(x+1/2*h, y+1/2*K1*h)
+    K3 = fun(x+1/2*h, y+1/2*K2*h)
+    K4 = fun(x+h, y+K3*h)
+
+    y1 = y - 1/6*(K1+K2+K3+K4)*h
+    return y1
+
+def funa(x,y):
+    return x * o * (y**2)/2
+
+def ark4(x,y,h):
+    K1 = funa(x,y)
+    K2 = funa(x+1/2*h, y+1/2*K1*h)
+    K3 = funa(x+1/2*h, y+1/2*K2*h)
+    K4 = funa(x+h, y+K3*h)
+    if y > 0:
+        y1 = y - 1/6*(K1+K2+K3+K4)*h
+    else:
+        y1 = y + 1 / 6 * (K1 + K2 + K3 + K4) * h
+    return y1
+
+
+p = 1/(4/3*3.14*1**3)
+A = 2*3.14
+def funb(x,y):
+    return 1/2 *p*o*A*y*y
+
+def brk4(x,y,h):
+    K1 = funa(x,y)
+    K2 = funa(x+1/2*h, y+1/2*K1*h)
+    K3 = funa(x+1/2*h, y+1/2*K2*h)
+    K4 = funa(x+h, y+K3*h)
+    if y > 0:
+        y1 = y - 1/6*(K1+K2+K3+K4)*h
+    else:
+        y1 = y + 1 / 6 * (K1 + K2 + K3 + K4) * h
+    return y1
+t = 0
 def updateSphere(part, dt):
     # tutaj trzeba dodać obsługę sił, w tym grawitacji
+    global t
+    t += dt
+    h = dt
+
+    x = t
+
+    y = part.v[1]
+
+    y1= rk4(x,y,h)
+    part.v[1] = y1
+
+    y = part.v[0]
+    y1 = ark4(x, y, h)
+    part.v[0] = y1
+
+    y = part.v[2]
+    y1 = ark4(x, y, h)
+    part.v[2] = y1
+
+    y = part.v[1]
+    y1 = ark4(x, y, h)
+    part.v[1] = y1
+
+    print(part.v)
+
     part.p[0] += dt * part.v[0]
     part.p[1] += dt * part.v[1]
     part.p[2] += dt * part.v[2]
-
-    print(part.v)
-    if part.v[1] > 0:
-        part.v[1] -= g
-    else:
-        part.v[1] -= g
-    if abs(part.v[0]) > o:
-        if part.v[0] >0:
-            part.v[0] -= o
-        else:
-            part.v[0] += o
-    if abs(part.v[1]) > o:
-        if part.v[1] >0:
-            part.v[1] -= o
-        else:
-            part.v[1] += o
-    if abs(part.v[2]) > o:
-        if part.v[2] >0:
-            part.v[2] -= o
-        else:
-            part.v[2] += o
 
 # sprawdzenie czy doszło do kolizji
 def checkSphereToFloorCollision(part):
@@ -163,7 +211,7 @@ def updateSphereCollision(part):
 def cupdate():
     global tick
     ltime = time.clock()
-    if ltime < tick + 0.1: # max 10 ramek / s
+    if ltime < tick + 0.01: # max 10 ramek / s
         return False
     tick = ltime
     return True
@@ -188,7 +236,7 @@ def display():
     glFlush()
 
 def keypress(k, x, y):
-    global s, pos, g, o
+    global s, pos, g, o, a
     key = k.decode("utf-8")
     if key == "i":
         s += 0.1
@@ -213,13 +261,15 @@ def keypress(k, x, y):
         else:
             part1.v[r] -= 50
     elif key == "x":
-        g += 0.001
+        a += 1
+        print("przyciaganie: ", a)
     elif key == "c":
-        g -= 0.001
+        a -= 1
+        print("przyciaganie: ", a)
     elif key == "n":
-        o += 0.001
+        o += 0.1
     elif key == "m":
-        o -= 0.001
+        o -= 0.1
 
 
 glutInit()
