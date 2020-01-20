@@ -211,7 +211,7 @@ def updateSphereCollision(part):
 def cupdate():
     global tick
     ltime = time.clock()
-    if ltime < tick + 0.01: # max 10 ramek / s
+    if ltime < tick + 0.1: # max 10 ramek / s
         return False
     tick = ltime
     return True
