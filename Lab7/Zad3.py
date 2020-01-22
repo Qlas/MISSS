@@ -170,11 +170,13 @@ def drawCue():
         glVertex3fv([part1.p[0] + (xx+10) * np.sin(rad), 2, part1.p[2] + (xx+10)*cos(rad+0.05)])
         glEnd()
 # ruch sfery
+flag3 = 0
 def updateSphere(part, dt):
     # tutaj trzeba dodać obsługę sił, w tym grawitacji
-    part.p[0] += dt * part.v[0]
-    part.p[1] += dt * part.v[1]
-    part.p[2] += dt * part.v[2]
+    if flag3 == 0:
+        part.p[0] += dt * part.v[0]
+        part.p[1] += dt * part.v[1]
+        part.p[2] += dt * part.v[2]
 
 # sprawdzenie czy doszło do kolizji
 def checkSphereToFloorCollision(part):
@@ -227,6 +229,7 @@ def cupdate():
     return True
 
 def sfereColl(sphere0, sphere1):
+    global flag3
     r0sqr = sphere0.r * sphere0.r
     r1sqr = sphere1.r * sphere1.r
 
@@ -239,8 +242,8 @@ def sfereColl(sphere0, sphere1):
     distSqrZ = distZ**2
 
     sqrDist = np.sqrt(distSqrX + distSqrY + distSqrZ)
-
     if r0sqr + r1sqr >= sqrDist:
+        flag3 = 1
         totalRadius = sphere0.r + sphere1.r
         if totalRadius < 2:
             totalRadius = 2.5
@@ -250,13 +253,29 @@ def sfereColl(sphere0, sphere1):
         mvmtX = distX * minMovement * 1
         mvmtY = distY * minMovement * 1
         mvmtZ = distZ * minMovement * 1
+
+
+        glLineWidth(2.5)
+        glColor3f(1,0,0)
+        glBegin(GL_LINES)
+        glVertex3f(sphere0.p[0], sphere0.p[1], sphere0.p[2])
+        glVertex3f(sphere0.p[0]+mvmtX*5, sphere0.p[1], sphere0.p[2]+mvmtZ*5)
+        glEnd()
+
+        print(mvmtX, mvmtY, mvmtZ)
+        glLineWidth(2.5)
+        glColor3f(0,1,0)
+        glBegin(GL_LINES)
+        glVertex3f(sphere1.p[0], sphere1.p[1], sphere1.p[2])
+        glVertex3f(sphere1.p[0]-mvmtX*5, sphere1.p[1], sphere1.p[2]-mvmtZ*5)
+        glEnd()
         if sphere0.v[0] != 0 or sphere1.v[0] != 0:
             if sphere0.p[0] < sphere1.p[0]:
                 # sphere0.p[0] -= mvmtX
                 # sphere1.p[0] += mvmtX
                 sphere0.v[0] = mvmtX * s
                 sphere1.v[0] = -  mvmtX * s
-            else:
+            elif sphere0.p[0] > sphere1.p[0]:
                 # sphere0.p[0] += mvmtX
                 # sphere1.p[0] -= mvmtX
                 sphere0.v[0] = mvmtX * s
@@ -268,7 +287,7 @@ def sfereColl(sphere0, sphere1):
                 # sphere1.p[2] += mvmtZ
                 sphere0.v[2] = mvmtZ * s
                 sphere1.v[2] = - mvmtZ * s
-            else:
+            elif sphere0.p[2] > sphere1.p[2]:
                 # sphere0.p[2] += mvmtZ
                 # sphere1.p[2] -= mvmtZ
                 sphere0.v[2] = mvmtZ * s
@@ -276,7 +295,7 @@ def sfereColl(sphere0, sphere1):
 
         if sphere0.v[1] != 0 or sphere1.v[1] != 0:
             if sphere0.p[1] <= sphere1.p[1]:
-                sphere1.p[1] -= mvmtY
+                # sphere1.p[1] -= mvmtY
                 if sphere0.p[0] < sphere1.p[0]:
                     sphere0.v[0] = mvmtY * s
                     sphere1.v[0] = - mvmtY * s
@@ -330,8 +349,8 @@ def display():
     updateSphereCollision(part4)
     if flag2 == 1:
         print("a")
-        part4.p[0] = part1.p[0]+part1.v[0]
-        part4.p[2] = part1.p[2]+part1.v[2]
+        part4.p[0] = part1.p[0]+part1.v[0]+1
+        part4.p[2] = part1.p[2]+part1.v[2]+1
         part4.p[1] = 5
         part4.v = [0,-2,0]
         flag2 = 2
@@ -355,7 +374,7 @@ def display():
     glFlush()
 
 def keypress(k, x, y):
-    global s, rad, flag, flag2
+    global s, rad, flag, flag2, flag3
     key = k.decode("utf-8")
     if key == "i":
         s += 0.1
@@ -369,6 +388,8 @@ def keypress(k, x, y):
         flag = 1
     elif key == "p":
         flag2 = 1
+    elif key == "b":
+        flag3 = 0
 
 glutInit()
 glutInitWindowSize(600, 600)

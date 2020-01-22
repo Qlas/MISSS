@@ -23,7 +23,7 @@ part1.quad = None
 s = 1
 pos = [-5.0, 5.0, 10.0]
 g = 0
-o = 0.1
+o = 0.2
 # rysowanie sfery
 def drawSphere(part):
     glLoadIdentity()
@@ -100,7 +100,7 @@ def rk4(x,y,h):
     K3 = fun(x+1/2*h, y+1/2*K2*h)
     K4 = fun(x+h, y+K3*h)
 
-    y1 = y - 1/6*(K1+K2+K3+K4)*h
+    y1 = y - 1/6*(K1+2*K2+2*K3+K4)*h
     return y1
 
 def funa(x,y):
@@ -112,9 +112,9 @@ def ark4(x,y,h):
     K3 = funa(x+1/2*h, y+1/2*K2*h)
     K4 = funa(x+h, y+K3*h)
     if y > 0:
-        y1 = y - 1/6*(K1+K2+K3+K4)*h
+        y1 = y - 1/6*(K1+2*K2+2*K3+K4)*h
     else:
-        y1 = y + 1 / 6 * (K1 + K2 + K3 + K4) * h
+        y1 = y + 1 / 6 * (K1 + 2*K2 + 2*K3 + K4) * h
     return y1
 
 
@@ -144,7 +144,7 @@ def updateSphere(part, dt):
 
     y = part.v[1]
 
-    y1= rk4(x,y,h)
+    y1 = rk4(x, y, h)
     part.v[1] = y1
 
     y = part.v[0]
@@ -159,7 +159,9 @@ def updateSphere(part, dt):
     y1 = ark4(x, y, h)
     part.v[1] = y1
 
-    print(part.v)
+
+
+    # print(part.v)
 
     part.p[0] += dt * part.v[0]
     part.p[1] += dt * part.v[1]
@@ -236,7 +238,7 @@ def display():
     glFlush()
 
 def keypress(k, x, y):
-    global s, pos, g, o, a
+    global s, pos, g, o, a, t
     key = k.decode("utf-8")
     if key == "i":
         s += 0.1
@@ -262,9 +264,11 @@ def keypress(k, x, y):
             part1.v[r] -= 50
     elif key == "x":
         a += 1
+        # t = 0
         print("przyciaganie: ", a)
     elif key == "c":
         a -= 1
+        # t = 0
         print("przyciaganie: ", a)
     elif key == "n":
         o += 0.1
